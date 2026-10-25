@@ -1,0 +1,19 @@
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # Os testes usam src/ e abrem o app Streamlit (AppTest), que lê as previsões em reports/ e a ficha em Model/
+      - run: pip install pandas numpy scipy scikit-learn joblib matplotlib seaborn plotly streamlit pytest
+      - run: pytest -v

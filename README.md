@@ -1,250 +1,291 @@
-# Rossmann Store Sales Prediction
-Este repositório contém script para previsão de vendas
+# 🏪 Previsão de Vendas da Rossmann (6 semanas por loja)
+
+**Quanto cada loja vai vender nas próximas 6 semanas? Um modelo treinado com 844 mil dias de venda de 1.115 drogarias responde loja a loja, e o CFO usa a resposta para definir a verba de reforma.**
 
 <div align="center">
-<img src="Imagens/Rossmann.jpg" width="500px">
+<img src="Imagens/Rossmann.jpg" width="450px">
 </div>
-</br>
 
-
-# _Objetivo do projeto_
-
-<img src="Imagens/rossmann_store.jpg" width="220px" align='right'>
-
-<p align = 'left'>
-
-Fazer a previsão de vendas de todas as unidades da rede, para isso, uma parcela do faturamento de cada loja deverá ser destinada para reforma da mesma nas próximas 6 semanas.
-<p>
-
-<br>
-
-# _1. Problema de Negócio_
-
-A Rossmann é uma empresa farmacêutica da Europa e todo final de mês existe uma reunião com todos os gerentes destas lojas para apresentar os resultados.
-Na reunião do último mês o CFO (Chief Financial Officer) pediu para todos os gerentes das lojas fizessem uma predição das próximas seis semanas de vendas de cada uma das suas lojas.
-Então depois desta reunião de resultados os gerentes saíram com esta tarefa de fazer esta predição.
-
-Neste cenário fictício, nossa fonte de dados é um arquivo csv de uma competição do Kaggle [clicando aqui](https://www.kaggle.com/c/rossmann-store-sales/data).
-
-<br>
-
-# _2. Justificativa_
-
-- **Por quê:** Dificuldade em determinar o valor do investimento para reformas de cada loja.
-- **Como:** Com a método CRISP-DM.
-- **O quê:** Um modelo Machine Learning para realizar a previsão de vendas de todas as lojas.
-
-<br>
-
-# _3. Premissas_
-
-As variáveis originais do conjuto de dados são:<br>
-
-Variável | Definição
------------- | -------------
-Store | identificador único da loja|
-DayOfWeek | dia da semana (1 = segunda-feira / 7 = domingo)|
-Sales | vendas/dia (objetivo)|
-Customers | número de clientes no dia.|
-Open | indica se a loja está aberta ou fechada (1 = aberta / 0 = fechada)|
-Promo | se existe uma promoção no dia ( 1 indica que estava ocorrendo uma promoção nesta loja)|
-StateHoliday | indica um feriado estadual (a = feriado público / b = feriado da páscoa / c = natal / 0 = nenhum tipo de feriado neste dia)|
-SchoolHoliday | feriado escolar (1 = feriado escolar / 0 = não é feriado escolar)|
-Store | identificador único da loja.|
-StoreType | tipo da loja, diferencia entre 4 modelos de loja diferentes: a, b, c, d|
-Assortment | descreve um nível de sortimento (a = básico / b = extra / c = estendido)|
-CompetitionDistance | distância da loja do concorrente mais próxima.|
-CompetitionOpenSinceMonth | fornece o mês aproximado em que o concorrente mais próximo foi aberto.|
-CompetitionOpenSinceYear | fornece o ano aproximado em que o concorrente mais próximo foi aberto.|
-Promo2 | Promo2 é uma promoção adicional para todas as lojas ( 0 = a loja não está participando / 1 = a loja está articipando)|
-Promo2SinceWeek | descreve a semana do calendário em que a loja começou a participar do Promo2.|
-Promo2SinceYear | descreve o ano do calendário em que a loja começou a participar do Promo2.|
-PromoInterval | descreve os intervalos consecutivos em que a Promo2 é iniciada, nomeando os meses. Por exemplo, "fevereiro, maio, agosto, novembro" significa que cada rodada começa em fevereiro, maio, agosto, novembro de qualquer ano para essa loja.|
-
-<br>
-
-# _4. Planejamento da Solução_
-
-O planejamento da solução para este projeto se baseia no método CRISP-DM (Cross Industry Standard Process for Data Mining), que é uma metodologia cíclica e flexivel voltada para resolução de problemas que envolvem grande volume de dados que permite a entrega rápida de valor para os times de negócio.
-
-Segue abaixo uma breve ilustração das principais etapas desse processo:
-
-<br>
-<div align="center">
-<img src="Imagens/CRISP2.png" width="700px">
-</div>
-<br>
-
-# _5. Insights_
-
-*Resumo dos insights durante análise exploratória de dados (EDA):*
-
-**Gráfico para saber o número das vendas por ano.**
-
-<br>
-<div align="center">
-<img src="Imagens/VendasAno.PNG" width="700px">
-</div>
-<br>
-
-<br>
-<div align="center">
-<img src="Imagens/VariacaoVendasAno.PNG" width="700px">
-</div>
-<br>
-
-**Nota:**
-- Temos uma queda nas vendas ao decorrer dos anos, que precisa ser analisado, para não afetar as vendas de 2015.
-- Mas comparando o mesmo período de meses entre 2014 e 2015 temos um aumento de 6%.
-- No no de 2015 até o mês de julho temos um crescimento de 6%, mas seria importante analisar o comportamento das vendas de 2014, para compreender o motivo da queda das vendas.
-
-**Gráfico para visualizar a soma das vendas por mês.**
-
-<br>
-<div align="center">
-<img src="Imagens/VendasMes.PNG" width="700px">
-</div>
-<br>
-
-**Nota:**
-- Por meio deste gráfico podemos perceber que no mês de novembro e dezembro segue uma sequência de aumento das vendas que pode ser explicada pela Black Friday e Natal, com está visualização a empresa pode fazer um planejamento de qual mês é mais importante para empresa para deixar preparado o estoque.
-
-**Gráfico para visualizar a soma das vendas por dia.**
-
-<br>
-<div align="center">
-<img src="Imagens/VendasDias.PNG" width="700px">
-</div>
-<br>
-
-**Nota:**
-- Podemos perceber que as vendas no final do mês, apresenta uma queda bem acentuada nas vendas.
-
-**Gráfico para visualizar a soma das vendas por dia da semana.**
-
-<br>
-<div align="center">
-<img src="Imagens/VendasDiaSemana.PNG" width="700px">
-</div>
-<br>
-
-**Nota:**
-- Podemos ver que o menor pico de vendas é no domingo, esta é uma informação que precisa compreender melhor este comportamento.
-
-**Gráfico para visualizar o número de cliente que vão na loja por mês.**
-
-<br>
-<div align="center">
-<img src="Imagens/ClienteLoja.PNG" width="700px">
-</div>
-<br>
-
-**Nota:**
-- O aumento da média de cliente no mês de novembro e dezembro pode ser explicado pela Black Friday e Natal, com está visualização a empresa pode fazer um planejamento de qual mês é mais importante para empresa para deixar preparado o estoque e os funcionários.
-
-**Gráfico para saber se a promoção afeta o número de cliente.**
-
-<br>
-<div align="center">
-<img src="Imagens/ClientePromocao.PNG" width="700px">
-</div>
-<br>
-
-**Nota:**
-- Podemos afirmar que quando têm promoção o número de cliente não aumentam muito (147), porém o número de vendas aumenta consideravelmente, pode ser que vários clientes acabam combrando mais produtos.
-
-**Gráfico para saber se a promoção afeta as vendas.**
-
-<br>
-<div align="center">
-<img src="Imagens/VendasPromocao.PNG" width="700px">
-</div>
-<br>
-
-**Nota:**
-- Podemos perceber que quando temos promoção na loja as vendas aumentam cerca de 12%.
-
-# _6. Modelos de Machine Learning_
-
-1. Average Model
-2. Linear Regressor
-3. Linear Regressor Regularizaded (Lasso)
-4. Random Forest Regressor
-5. Prophet
-6. XGBoost Regressor
-
-<br>
-<div align="center">
-<img src="Imagens/Modelos.PNG" width="700px">
-</div>
-<br>
-
-<br>
-
-# _7. Performance do Modelo de Machine Learning_
-
-Comparando o desempenho dos modelos - Cross Validation.
-
-<br>
-<div align="center">
-<img src="Imagens/PerformanceModelo.PNG" width="700px">
-</div>
-<br>
-
-**Nota:**
-
-- Também podemos observar a tabela final e ver que Random Forest Regressor tem uma performance melhor que todos os outros modelos.
-
-<br>
-
-# _8. Resultado Negócio_
-
-Após a escolha do nosso algoritmo, somos capazes de visualizar alguns cenarios do ponto de vista de negócio.
-
- <br>
- <div align="center">
- <img src="Imagens/Cenario.PNG" width="700px">
- </div>
- <br>
-
- **Nota:**
-
- - Na loja 286, vamos fazer  189.498 reais de receita nas próximas 6 semanas com um erro de 4%, que corresponde a 1.433 reais.
- - No pior cenário podemos vender 188.064 reais e no melhor 190.932 reais.
-
-**Gráfico para visualizar a performance da predição em relação as vendas reais.**
-
- <br>
- <div align="center">
- <img src="Imagens/RealPrevisao.PNG" width="700px">
- </div>
- <br>
-
- O gráfico esta mostrando as seis semanas de teste e podemos ver que as predições ao longo do tempo esta bem próxima das vendas.
-
- <br>
-
-# _9. Conclusão_
-
-Com o modelo selecionado, treinado e avaliado com uma boa performance, chegou a hora de coloca-lo em produção. Para isso, optamos por disponibilizar as predições do projeto de forma online através do aplicativo de mensagens Telegram.
-
-Neste aplicativo, o usuário deverá informar para um bot criado no Telegram o ID da loja a qual deseja obter a previsão de vendas nas próximas 6 semanas. Assim, o bot retornará uma mensagem com a previsão.
+[![Testes](https://github.com/RafaelSilva89/Rossmann_Store_Sales_Prediction/actions/workflows/testes.yml/badge.svg)](https://github.com/RafaelSilva89/Rossmann_Store_Sales_Prediction/actions/workflows/testes.yml)
+
+**Python · Pandas · Scikit-learn · XGBoost · LightGBM · SciPy · Pytest · GitHub Actions · Streamlit · CRISP-DM**
+
+| 📊 Destaques | |
+|---|---|
+| Base | **1.017.209 registros** de venda diária de **1.115 lojas** da rede alemã Rossmann (Kaggle), de jan/2013 a jul/2015, em **euros** |
+| Modelo | O total de 6 semanas de cada loja erra **3,7%** em média, contra **6,0%** de quem usa só a média da loja. O erro do dia é de **€ 614** (MAPE de **9,2%**), contra **€ 933** (**13,3%**) da versão original nas mesmas semanas |
+| O que faz vender | **Promoção** (**+38,8%** na venda do dia), **segunda-feira** e **dezembro** (**+24%**). A chegada de um **concorrente** tira **~6%** da venda |
+| A v2 corrigiu | A EDA original **somava** as vendas em vez de tirar a média, e **6 conclusões** se invertem (as vendas **sobem** a cada ano, em vez de cair). O "modelo da média" da v1 **usava as respostas** do teste |
+| Entrega | Notebook CRISP-DM, **14 testes automatizados** (GitHub Actions) e **app Streamlit** com a previsão de cada loja e o orçamento de reforma da rede |
+
+---
+
+## 📑 Sumário
+
+1. [Contexto do problema](#1-contexto-do-problema)
+2. [Objetivo](#2-objetivo)
+3. [Base de dados](#3-base-de-dados)
+4. [Estrutura do projeto](#4-estrutura-do-projeto)
+5. [Como executar](#5-como-executar)
+6. [Etapas do projeto (CRISP-DM)](#6-etapas-do-projeto-crisp-dm)
+7. [Principais descobertas da análise exploratória](#7-principais-descobertas-da-análise-exploratória)
+8. [Construção do modelo](#8-construção-do-modelo)
+9. [Resultado do modelo](#9-resultado-do-modelo)
+10. [App interativo (Streamlit)](#10-app-interativo-streamlit)
+11. [O que mudou da v1 para a v2](#11-o-que-mudou-da-v1-para-a-v2)
+12. [Insights](#12-insights)
+13. [Limites](#13-limites)
+14. [Próximos passos](#14-próximos-passos)
+
+---
+
+## 1. Contexto do problema
+
+<img src="Imagens/rossmann_store.jpg" width="200px" align="right">
+
+A **Rossmann** é uma das maiores redes de drogarias da Europa. Neste cenário (baseado numa competição do Kaggle), o **CFO** quer reformar as lojas e vai reservar para isso uma **parcela do faturamento das próximas 6 semanas** de cada uma. Por isso, pediu aos gerentes uma previsão de vendas loja a loja.
+
+| Se a previsão fica... | O que acontece |
+|---|---|
+| **Alta demais** | A loja recebe uma verba de reforma que o caixa dela não sustenta |
+| **Baixa demais** | A reforma é adiada ou fica menor do que a loja poderia pagar |
+
+Hoje cada gerente prevê do seu jeito. Um modelo treinado com o histórico de **todas** as lojas dá uma previsão **objetiva, igual para todas e com o erro medido**.
+
+## 2. Objetivo
+
+> **Perguntas de negócio:**
+> 1. **Quanto cada loja vai vender** nas próximas 6 semanas? Com que **margem de erro**?
+> 2. **O que faz uma loja vender mais:** promoção, dia da semana, época do ano, tipo de loja, sortimento, concorrência?
+> 3. Em quais **lojas e situações** a previsão é mais confiável?
+> 4. Quanto a rede pode reservar para **reforma**, loja a loja?
+
+## 3. Base de dados
+
+A base é a competição [*Rossmann Store Sales*](https://www.kaggle.com/c/rossmann-store-sales/data) (Kaggle), em `Datasets/`:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `train.csv` | Venda diária de cada loja, de 01/01/2013 a 31/07/2015 (base do modelo) |
+| `store.csv` | Cadastro das 1.115 lojas: tipo, sortimento, concorrência e Promo2 |
+| `test.csv` | As **6 semanas seguintes** (01/08 a 17/09/2015) de 856 lojas, **sem as vendas**: é o que o modelo prevê |
+
+| Coluna (traduzida) | Descrição |
+|---|---|
+| `vendas` | 🎯 **Alvo**: venda do dia, em euros |
+| `loja`, `data`, `dia_semana` | Loja e calendário |
+| `aberta`, `promo`, `feriado`, `feriado_escolar` | Se a loja abriu, se estava em promoção e se era feriado |
+| `tipo_loja`, `sortimento` | Modelo da loja (a, b, c, d) e variedade de produtos (básico, extra, estendido) |
+| `distancia_concorrente`, `concorrente_desde_...` | Distância e data de abertura do concorrente mais próximo |
+| `promo2`, `promo2_desde_...`, `promo2_meses` | Promoção contínua que reinicia em meses fixos |
+| `clientes` | ⚠️ Clientes do dia: só conhecido **depois** do dia, **fica fora do modelo** (vazamento) |
+
+## 4. Estrutura do projeto
+
+```
+Rossmann_Store_Sales_Prediction/
+├── Datasets/                           # train.csv, store.csv e test.csv (Kaggle)
+├── Imagens/                            # gráficos gerados pelos notebooks
+├── Model/
+│   ├── modelo_rossmann_v2.pkl          # modelo de produção + faixa de erro
+│   ├── modelo_rossmann_v2.json         # ficha do modelo (colunas, métricas, hiperparâmetros, avisos)
+│   └── model_rossmann.pkl              # modelo da versão original
+├── docs/
+│   └── decisoes_analiticas.md          # registro das decisões do projeto (DA-01 a DA-16)
+├── reports/
+│   ├── comparacao_modelos.csv          # métricas dos 8 modelos (validação e validação cruzada)
+│   ├── erro_por_tipo_de_loja.csv       # tradução do erro por tipo de loja
+│   ├── erro_por_sortimento.csv         # tradução do erro por sortimento
+│   └── previsoes_6_semanas.csv         # previsão dia a dia de ago-set/2015 (usada pelo app)
+├── Notebooks/
+│   ├── Rossmann_Store_Sales_Prediction.ipynb        # versão original
+│   └── Rossmann_Store_Sales_Prediction - v2.ipynb   # versão reorganizada (CRISP-DM)
+├── src/
+│   ├── config.py                       # caminhos, semente, colunas e datas de corte
+│   ├── dados.py                        # leitura, tradução, variáveis criadas e separação no tempo
+│   ├── modelos.py                      # médias da loja (dentro do Pipeline) e modelos de referência
+│   ├── validacao.py                    # validação cruzada no tempo (janelas de 6 semanas)
+│   ├── estatistica.py                  # testes das hipóteses (com tamanho do efeito) e regra do IQR
+│   ├── selecao.py                      # seleção de variáveis (Random Forest + Informação Mútua)
+│   ├── avaliacao.py                    # ml_error, erro do total por loja, faixa de erro, tradução do erro e ficha
+│   └── graficos.py                     # gráficos e formatação em português
+├── tests/
+│   ├── test_funcoes.py                 # 11 testes das funções de src/
+│   └── test_app.py                     # 3 testes do app (AppTest do Streamlit)
+├── Parameter/, rossmann/, rossmann-telegram-api/   # escalas, API e bot do Telegram da versão original (histórico)
+├── .github/workflows/testes.yml        # roda os testes a cada push (GitHub Actions)
+├── app.py                              # app Streamlit
+├── pytest.ini
+├── requirements.txt
+└── README.md
+```
+
+## 5. Como executar
+
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/RafaelSilva89/Rossmann_Store_Sales_Prediction.git
+cd Rossmann_Store_Sales_Prediction
+
+# 2. Instalar as dependências
+pip install -r requirements.txt
+
+# 3. Rodar os testes
+pytest
+
+# 4. Abrir o notebook e executar todas as células (cerca de 1 hora; gera o modelo e as previsões usados pelo app)
+jupyter notebook "Notebooks/Rossmann_Store_Sales_Prediction - v2.ipynb"
+
+# 5. Abrir o app
+streamlit run app.py
+```
+
+## 6. Etapas do projeto (CRISP-DM)
+
+| Fase | O que foi feito |
+|---|---|
+| **01. Entendimento do negócio** | Definição das 4 perguntas e do público (CFO e gerentes) |
+| **02. Preparação dos dados** | Junção de vendas e cadastro, tradução, nulos tratados pelo que significam, a lacuna das 180 lojas, outliers pela regra do IQR, retirada dos clientes (vazamento) e EDA com **12 hipóteses** (médias, teste estatístico e tamanho do efeito) |
+| **03. Modelagem** | Separação no tempo, **validação cruzada no tempo** (5 janelas de 6 semanas), seleção de variáveis, 8 modelos (uma seção cada), ajuste fino, faixa de erro do total, calibração e teste anti-vazamento |
+| **04. Avaliação** | Erro no teste (as mesmas semanas da v1), total da rede e por loja, lojas mais difíceis, **tradução do erro** por tipo de loja, sortimento e dia da semana, e variáveis mais importantes |
+| **05. Implantação** | Modelo de produção com ficha, previsão real de ago–set/2015 e app Streamlit |
+
+## 7. Principais descobertas da análise exploratória
+
+### 🔎 Antes de tudo: entender o que a base diz
+
+- **Somar engana.** A versão original comparava grupos pela soma das vendas. Mas 2015 vai só até julho, só 33 lojas abrem aos domingos e o sortimento "extra" tem 9 lojas: a soma desses grupos é pequena mesmo que cada loja venda muito. A v2 compara a **venda média por dia de loja aberta**.
+- **180 lojas somem por 6 meses** (jul–dez/2014). Sem perceber isso, 2014 parece um ano ruim.
 
 <div align="center">
-<img src="Imagens/telegramBot.gif" width="250px">
+<img src="Imagens/Lojas por dia.png" width="700px">
 </div>
-</br>
 
-# _10. Próximos passos_
+- Os **clientes do dia** explicam a venda quase inteira (correlação de **0,83**), mas só são conhecidos depois do dia: ficam fora do modelo.
+- As vendas muito altas (**3,6%** dos dias, pela regra do IQR) são **reais**: promoções, Natal e lojas grandes. Ficam na base.
 
-1. Temos uma queda nas vendas ao decorrer dos anos, que precisa ser analisado, para não afetar as vendas de 2015.
-   - Mas comparando o mesmo período de meses entre 2014 e 2015 temos um aumento de 6%.
+### As hipóteses
 
+| # | Hipótese | Conclusão da v1 | Conclusão da v2 | Evidência |
+|---|---|---|---|---|
+| **H1** | Promoção vende mais | Verdadeira, +12% | ✅ Verdadeira | **+38,8%** (€ 5.930 → € 8.229), em **99,9%** das lojas |
+| **H2** | Sortimento maior vende mais | Falsa | ⚠️ Em parte | O **extra** vende mais (**€ 8.558**), mas são só 9 lojas |
+| **H3** | Concorrente perto vende menos | Falsa | ❌ Falsa | Sem relação (rho **−0,03**) |
+| **H4** | O tipo de loja muda a venda | Tipo a vende mais | ⚠️ Só o tipo b | Tipo b: **€ 10.112**; a, c e d: ~€ 6.900 |
+| **H5** | Vende mais a cada ano | Falsa (cai) | ✅ Verdadeira | **+3,2%** e **+3,5%** ao ano, nas mesmas lojas |
+| **H6** | Vende mais no fim do ano | Falsa | ✅ Verdadeira | Dezembro: **€ 8.609** (**+24%**) |
+| **H7** | Vende mais depois do dia 10 | Verdadeira | ❌ Falsa | Vende mais **antes**: € 7.287 contra € 6.800 |
+| **H8** | Vende menos no fim de semana | Verdadeira | ✅ Verdadeira | Sábado: **€ 5.875** contra **€ 7.173** nos dias úteis |
+| **H9** | Vende menos no feriado escolar | Verdadeira | ❌ Falsa | **+0,8%** na mesma loja |
+| **H10** | Promo2 vende mais | Falsa | ❌ Falsa | As lojas da Promo2 vendem **menos** (€ 6.551 contra € 7.338) |
+| **H11** | Concorrente novo reduz a venda | (não testada) | ✅ Verdadeira | **−5,9%** nos 3 meses seguintes, em **83%** das lojas |
+| **H12** | Feriado vende mais | Falsa | ❌ Falsa | Nas mesmas lojas, sem diferença (p = 0,33) |
 
-2. Registros que são outliers: 101.710.
-    - Devemos depois fazer uma análise mais profunda porque nem tudo pode ser um outlier.
+<div align="center">
+<img src="Imagens/H1 Promocao.png" width="700px">
+</div>
 
+> 🧪 **Testes estatísticos:** cada hipótese tem um teste e uma medida de **tamanho do efeito**: Wilcoxon pareado (a mesma loja em duas situações: promoção, ano, feriado escolar, concorrente novo, feriado), Kruskal-Wallis + épsilon² (sortimento, tipo, mês), Mann-Whitney + correlação de postos (dia do mês, fim de semana, Promo2) e Spearman (distância). As características da loja são testadas com uma linha por loja, não por dia. Com 844 mil dias, quase tudo dá p-valor minúsculo: o que importa é o tamanho do efeito, não o p.
 
-3. Podemos perceber que as vendas no final do mês, apresenta uma queda bem acentuada nas vendas, que precisa análisar.
+## 8. Construção do modelo
 
-4. Podemos ver que o menor pico de vendas é no domingo, esta é uma informação que precisa compreender melhor este comportamento.
+| Etapa | Como foi feito |
+|---|---|
+| **Variáveis** | 18 informações conhecidas **antes** do dia: loja, calendário, promoção, feriados e cadastro (tipo, sortimento, concorrência, Promo2). Os clientes ficam de fora |
+| **Médias da loja** | O número da loja vira a **venda média** dela (geral, por dia da semana e com/sem promoção), calculada **só no treino**, dentro do `Pipeline` |
+| **Divisão** | No tempo: treino até 07/05/2015, validação de 6 semanas e **teste nas mesmas 6 semanas da v1** (19/06 a 31/07/2015), aberto uma única vez |
+| **Validação cruzada** | **5 janelas de 6 semanas**, sempre treinando no passado; é ela que escolhe o algoritmo |
+| **Algoritmos** | Média da loja (referência), planilha (loja × dia × promoção), Regressão Linear, Lasso, Random Forest, XGBoost, LightGBM e HistGradientBoosting, com o **log da venda** como alvo e métricas em euros |
+| **Escolha** | **XGBoost**: menor MAPE na validação cruzada (**10,6% ± 1,3%**) e 1º lugar em todas as métricas, empatado com o LightGBM e o HGB dentro do desvio |
+| **Ajuste fino** | `RandomizedSearchCV` com a validação cruzada no tempo: erro do total na validação de **4,4%** para **3,9%** |
+| **Anti-vazamento** | Com os clientes do dia, o MAPE "cairia" de 9,5% para **5,3%**; o "modelo da média" da v1 acertava o total com **0,0%** de erro porque usava as respostas |
+
+<div align="center">
+<img src="Imagens/Comparacao dos modelos.png" width="850px">
+</div>
+
+## 9. Resultado do modelo
+
+| Teste (19/06 a 31/07/2015, 1.115 lojas) | Modelo final | Planilha | Média da loja | Versão original |
+|---|---|---|---|---|
+| **Erro do total de 6 semanas por loja** | **3,7%** | 6,1% | 6,0% | não medido |
+| Erro do dia (MAE) | **€ 614** | € 739 | € 1.440 | € 933 |
+| Erro do dia (MAPE) | **9,2%** | 10,7% | 22,8% | 13,3% |
+| R² | **0,912** | 0,869 | 0,604 | — |
+
+- Somando a rede inteira, o modelo previu **€ 291,5 milhões** para uma venda real de **€ 289,6 milhões** (**+0,68%**). Só **5,2%** das lojas têm o total errado em mais de 10%.
+- O erro do total vai de **3,4%** (lojas tipo d) a **4,7%** (tipo b). O **sábado** é o dia mais difícil (MAPE de **12,6%**).
+- Os erros grandes vêm de **eventos**: a loja 909, a pior, ficou fechada cerca de duas semanas em julho e voltou vendendo bem acima do normal.
+- 🎯 **A faixa de erro cumpriu o prometido:** medida em **5 períodos** de 6 semanas antes do teste, ela diz que o total real fica entre **95,4% e 108,4%** do previsto em 80% das lojas. No teste, cobriu **78,9%** das lojas. Se tivesse sido medida só no último período (em que o modelo errava para baixo), cobriria apenas **60,4%**.
+
+<div align="center">
+<img src="Imagens/Previsto x observado.png" width="850px">
+</div>
+
+**O que mais pesa na previsão** (importância por permutação): a **loja** (pelas suas médias), a **promoção**, o **dia da semana** e o **dia do mês**. Num dia típico, a promoção soma **+20%**, a segunda-feira **+12%** e a semana antes do Natal **+50%**.
+
+## 10. App interativo (Streamlit)
+
+O app tem 3 abas:
+1. **🏪 Loja:** escolha uma loja e veja o **total previsto** de 01/08 a 17/09/2015, o **mínimo e o máximo prováveis**, o cadastro da loja e a venda prevista de cada dia.
+2. **🧾 Orçamento de reforma:** escolha a **parcela do faturamento** destinada à reforma e veja a verba de cada loja e da rede (ex.: com 5%, cerca de **€ 12 milhões** para 856 lojas), com a opção conservadora pelo mínimo provável. A tabela pode ser baixada em CSV.
+3. **ℹ️ Sobre o modelo:** erro do total e do dia no teste, comparação com a média da loja e os avisos da ficha do modelo.
+
+```bash
+streamlit run app.py
+```
+
+> ℹ️ O app usa `reports/previsoes_6_semanas.csv` e `Model/modelo_rossmann_v2.json`, gerados ao executar o notebook até a Fase 05.
+
+> 📱 A versão original entregava a previsão por um **bot no Telegram**, com uma API no Heroku. O plano gratuito do Heroku acabou em 2022 e o bot parou; as pastas `rossmann/` e `rossmann-telegram-api/` ficam como histórico.
+
+## 11. O que mudou da v1 para a v2
+
+A versão original foi mantida em `Notebooks/` (e o bot em `rossmann-telegram-api/`) para mostrar a evolução.
+
+| # | Versão original (v1) | Problema | Versão v2 |
+|---|---|---|---|
+| 1 | EDA com **somas** das vendas | Mistura quanto cada loja vende com quantos dias e lojas o grupo tem: "as vendas caem", "domingo vende menos", "extra vende pouco" | **Médias** por dia de loja aberta e comparação da mesma loja: 6 conclusões se invertem |
+| 2 | Hipóteses só com gráficos | Não separa efeito real de acaso | **12 hipóteses** com teste estatístico e tamanho do efeito |
+| 3 | Lacuna das 180 lojas não percebida | 2014 parecia um ano de queda | Lacuna documentada; anos comparados nas mesmas lojas e meses |
+| 4 | "Modelo da média" calculado nas semanas do teste | Usava as respostas (erro do total de 0,0%) | Média da loja e planilha treinadas só no passado |
+| 5 | Escalas ajustadas na base toda; o arquivo errado salvo para o mês e o ano | Vazamento e produção transformando os dados errado | Tudo dentro de um `Pipeline`, ajustado só no treino |
+| 6 | Distância nula → média; datas nulas → 0 | Inventava concorrentes e um "ano 0" | Nulos tratados pelo significado, com indicadores |
+| 7 | XGBoost com `colsample_bytee` (ignorado) e modelo final com hiperparâmetros não testados | Ajuste não reproduzível | `RandomizedSearchCV` com validação cruzada no tempo e sementes fixas |
+| 8 | README diz que o Random Forest venceu; a produção usa o XGBoost | Documentação contraditória | Escolha registrada pela validação cruzada (DA-08) |
+| 9 | Cenários = total ± erro de **um dia** | Faixa de ±0,3%, que cobre 5% das lojas; "loja 286 com erro de 4%" e MAPE de 44% | Faixa relativa do total de 6 semanas, medida em 5 períodos: cobriu **78,9%** das lojas no teste (meta: 80%) |
+| 10 | Sem erro do total por loja | Não respondia à pergunta do CFO | **Erro do total de 6 semanas** como métrica do negócio: **3,7%** |
+| 11 | Prophet com todas as lojas numa série só | Misturava 1.115 lojas diferentes | Prophet retirado, com o motivo registrado |
+| 12 | Vendas em R$ | A base é alemã | **Euros** |
+| 13 | Bot no Telegram (Heroku) | Parou com o fim do plano gratuito | App Streamlit com **14 testes** no GitHub Actions |
+| 14 | Resultado no teste: MAE de € 933, MAPE de 13,3% | — | MAE de **€ 614**, MAPE de **9,2%** nas mesmas semanas |
+
+## 12. Insights
+
+1. **Compare médias, não somas:** a soma inverteu 6 conclusões da versão original.
+2. **Conte quantas unidades aparecem em cada período** antes de comparar: 180 lojas sumiram por 6 meses.
+3. **A promoção é a maior alavanca da rede:** +38,8% na venda do dia, não +12%.
+4. **Um concorrente novo custa ~6% da venda**, e a loja não recupera em 6 meses. A distância de um concorrente antigo não diz nada.
+5. **As lojas tipo b são diferentes:** quase 2 mil clientes por dia e gasto de € 5 por cliente, como lojas de passagem.
+6. **Para orçamento, o total é o número certo:** o dia erra 9,2%, o total de 6 semanas erra 3,7%.
+7. **A régua de comparação também precisa ser testada:** a "média da loja" da v1 acertava o total com 0,0% de erro porque usava as respostas.
+8. **A incerteza depende do período em que foi medida:** medida num período só, a faixa de 80% cobriria 60% no teste; medida em 5 períodos, cobriu 79%.
+9. **Os erros grandes vêm de eventos** (reformas, reinaugurações): vale revisar essas lojas à mão.
+
+## 13. Limites
+
+- **A faixa ainda é um pouco otimista para baixo:** **18,5%** das lojas venderam menos que o mínimo provável (o esperado era 10%), e nas lojas menores a cobertura cai para **71,3%**. A faixa é a mesma para todas as lojas.
+- **Dados de 2013 a 2015:** para usar hoje, é preciso retreinar com dados recentes.
+- **Prevê só dias abertos:** o calendário de abertura precisa ser informado.
+- **Eventos fora do padrão não são previstos:** reinaugurações, reformas e um concorrente abrindo durante as 6 semanas.
+- **Lojas novas** recebem a média da rede.
+- **Correlação não é causa:** a Promo2 está ligada a vendas menores, mas a base não diz se ela atrapalha ou se foi dada às lojas mais fracas.
+
+## 14. Próximos passos
+
+1. **Faixa por tamanho de loja** (ou intervalos conformes condicionais), porque as lojas menores ficaram com cobertura de 71,3%.
+2. **Variável de tendência por loja** (crescimento recente), para reduzir a troca de viés entre períodos.
+3. **Marcar eventos** (períodos longos de loja fechada) e avisar no app as lojas com reforma recente.
+4. **Busca de hiperparâmetros maior** e comparação com o LightGBM ajustado, 3× mais rápido.
+5. **Dados externos:** clima e feriados escolares por estado.
+6. **Publicar o app** no Streamlit Community Cloud e gravar um GIF para o README.
