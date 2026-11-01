@@ -8,7 +8,7 @@
 
 [![Testes](https://github.com/RafaelSilva89/Rossmann_Store_Sales_Prediction/actions/workflows/testes.yml/badge.svg)](https://github.com/RafaelSilva89/Rossmann_Store_Sales_Prediction/actions/workflows/testes.yml)
 
-**Python · Pandas · Scikit-learn · XGBoost · LightGBM · SciPy · Pytest · GitHub Actions · Streamlit · CRISP-DM**
+**Python · Pandas · Scikit-learn · XGBoost · LightGBM · Optuna · SHAP · SciPy · Pytest · GitHub Actions · Streamlit · CRISP-DM**
 
 | 📊 Destaques | |
 |---|---|
@@ -16,7 +16,7 @@
 | Modelo | O total de 6 semanas de cada loja erra **3,7%** em média, contra **6,0%** de quem usa só a média da loja. O erro do dia é de **€ 614** (MAPE de **9,2%**), contra **€ 933** (**13,3%**) da versão original nas mesmas semanas |
 | O que faz vender | **Promoção** (**+38,8%** na venda do dia), **segunda-feira** e **dezembro** (**+24%**). A chegada de um **concorrente** tira **~6%** da venda |
 | A v2 corrigiu | A EDA original **somava** as vendas em vez de tirar a média, e **6 conclusões** se invertem (as vendas **sobem** a cada ano, em vez de cair). O "modelo da média" da v1 **usava as respostas** do teste |
-| Entrega | Notebook CRISP-DM, **14 testes automatizados** (GitHub Actions) e **app Streamlit** com a previsão de cada loja e o orçamento de reforma da rede |
+| Entrega | Notebook CRISP-DM, **22 testes automatizados** (GitHub Actions) e **app Streamlit** com a previsão de cada loja (pior, provável e melhor cenário), o orçamento de reforma da rede e o **monitoramento** semana a semana |
 
 ---
 
@@ -91,12 +91,17 @@ Rossmann_Store_Sales_Prediction/
 │   ├── modelo_rossmann_v2.json         # ficha do modelo (colunas, métricas, hiperparâmetros, avisos)
 │   └── model_rossmann.pkl              # modelo da versão original
 ├── docs/
-│   └── decisoes_analiticas.md          # registro das decisões do projeto (DA-01 a DA-16)
+│   └── decisoes_analiticas.md          # registro das decisões do projeto (DA-01 a DA-19)
 ├── reports/
 │   ├── comparacao_modelos.csv          # métricas dos 8 modelos (validação e validação cruzada)
 │   ├── erro_por_tipo_de_loja.csv       # tradução do erro por tipo de loja
 │   ├── erro_por_sortimento.csv         # tradução do erro por sortimento
-│   └── previsoes_6_semanas.csv         # previsão dia a dia de ago-set/2015 (usada pelo app)
+│   ├── cenarios_lojas_teste.csv        # pior, provável e melhor cenário de cada loja no teste, com o real
+│   ├── previsoes_6_semanas.csv         # previsão dia a dia de ago-set/2015 (usada pelo app)
+│   ├── cenarios_6_semanas.csv          # pior, provável e melhor cenário de cada loja em ago-set/2015
+│   ├── shap_lojas.csv                  # efeito SHAP de cada grupo de variáveis por loja (aba Loja do app)
+│   ├── monitoramento_teste.csv.gz      # as 6 semanas do teste com real e previsto (aba Monitoramento)
+│   └── referencia_monitoramento.csv.gz # amostra das 5 janelas da validação cruzada (referência do drift)
 ├── Notebooks/
 │   ├── Rossmann_Store_Sales_Prediction.ipynb        # versão original
 │   └── Rossmann_Store_Sales_Prediction - v2.ipynb   # versão reorganizada (CRISP-DM)
@@ -108,10 +113,13 @@ Rossmann_Store_Sales_Prediction/
 │   ├── estatistica.py                  # testes das hipóteses (com tamanho do efeito) e regra do IQR
 │   ├── selecao.py                      # seleção de variáveis (Random Forest + Informação Mútua)
 │   ├── avaliacao.py                    # ml_error, erro do total por loja, faixa de erro, tradução do erro e ficha
+│   ├── otimizacao.py                   # Optuna com janelas no tempo e poda, histórico e resumo dos métodos de busca
+│   ├── explicacao.py                   # valores SHAP do XGBoost e soma por grupo de variáveis
+│   ├── monitoramento.py                # PSI, K-S, erro de cada semana e painel x SLA
 │   └── graficos.py                     # gráficos e formatação em português
 ├── tests/
-│   ├── test_funcoes.py                 # 11 testes das funções de src/
-│   └── test_app.py                     # 3 testes do app (AppTest do Streamlit)
+│   ├── test_funcoes.py                 # 17 testes das funções de src/
+│   └── test_app.py                     # 5 testes do app (AppTest do Streamlit)
 ├── Parameter/, rossmann/, rossmann-telegram-api/   # escalas, API e bot do Telegram da versão original (histórico)
 ├── .github/workflows/testes.yml        # roda os testes a cada push (GitHub Actions)
 ├── app.py                              # app Streamlit
@@ -133,12 +141,37 @@ pip install -r requirements.txt
 # 3. Rodar os testes
 pytest
 
-# 4. Abrir o notebook e executar todas as células (cerca de 1 hora; gera o modelo e as previsões usados pelo app)
+# 4. Abrir o notebook e executar todas as células (cerca de 5 h 30; veja o tempo de cada etapa abaixo)
 jupyter notebook "Notebooks/Rossmann_Store_Sales_Prediction - v2.ipynb"
 
 # 5. Abrir o app
 streamlit run app.py
 ```
+
+### ⏱️ Tempo de execução do notebook
+
+A execução completa leva **cerca de 5 h 30**. Tempo de cada etapa:
+
+| Etapa | Tempo |
+|---|---|
+| Fases 01 e 02: carga, preparação e hipóteses | 1,1 min |
+| Fase 03: separação no tempo, pré-processamento e seleção de variáveis | 3,5 min |
+| Fase 03: 8 modelos e validação cruzada em 5 janelas | 33,1 min |
+| Fase 03: 7.1 Grid Search | 28,0 min |
+| Fase 03: 7.2 Random Search | 56,4 min |
+| Fase 03: 7.3 Otimização Bayesiana (Optuna) | 48,6 min |
+| Fase 03: comparação dos métodos, modelo ajustado e modelo final | 16,5 min |
+| Fase 03: faixa de erro, calibração e teste anti-vazamento | 11,9 min |
+| Fase 04: avaliação no teste, cenários e permutação | 1,2 min |
+| Fase 04: SHAP dos 41.396 dias do teste | 66,0 min |
+| Fase 05: modelo de produção e previsão de ago–set/2015 | 2,9 min |
+| Fase 05: SHAP de cada loja (35.104 dias abertos) | 56,6 min |
+| Fase 05: monitoramento (backtest de retreino, drift e SLA) | 8,7 min |
+| **Total** | **5 h 34 min (334,5 min)** |
+
+A busca de hiperparâmetros (7.1 a 7.3) leva 40% do tempo, e o cálculo exato do SHAP, 37%. Para testar só o resto, dá para reduzir `n_iter` do Random Search e `n_trials` do Optuna, e calcular o SHAP numa amostra dos dias.
+
+Medido na execução completa de 01/11/2026 (01h32 às 07h06), num notebook com Intel Core i3-4005U (2 núcleos, 1,7 GHz) e 8 GB de RAM, com o kernel em Python 3.13, num terminal separado e com o navegador fechado (com outros programas abertos, a execução foi interrompida por falta de memória). Num computador mais novo o tempo cai bastante, mas a proporção entre as etapas se mantém.
 
 ## 6. Etapas do projeto (CRISP-DM)
 
@@ -146,9 +179,9 @@ streamlit run app.py
 |---|---|
 | **01. Entendimento do negócio** | Definição das 4 perguntas e do público (CFO e gerentes) |
 | **02. Preparação dos dados** | Junção de vendas e cadastro, tradução, nulos tratados pelo que significam, a lacuna das 180 lojas, outliers pela regra do IQR, retirada dos clientes (vazamento) e EDA com **12 hipóteses** (médias, teste estatístico e tamanho do efeito) |
-| **03. Modelagem** | Separação no tempo, **validação cruzada no tempo** (5 janelas de 6 semanas), seleção de variáveis, 8 modelos (uma seção cada), ajuste fino, faixa de erro do total, calibração e teste anti-vazamento |
-| **04. Avaliação** | Erro no teste (as mesmas semanas da v1), total da rede e por loja, lojas mais difíceis, **tradução do erro** por tipo de loja, sortimento e dia da semana, e variáveis mais importantes |
-| **05. Implantação** | Modelo de produção com ficha, previsão real de ago–set/2015 e app Streamlit |
+| **03. Modelagem** | Separação no tempo, **validação cruzada no tempo** (5 janelas de 6 semanas), seleção de variáveis, 8 modelos (uma seção cada), ajuste fino com **Grid × Random × Bayesiana**, faixa de erro do total, calibração e teste anti-vazamento |
+| **04. Avaliação** | Erro no teste (as mesmas semanas da v1), total da rede e por loja, lojas mais difíceis, **tradução do erro** por tipo de loja, sortimento e dia da semana, e variáveis mais importantes (permutação e **SHAP**) |
+| **05. Implantação** | Modelo de produção com ficha, previsão real de ago–set/2015, **monitoramento** (backtest de retreino, drift e SLA semanal) e app Streamlit |
 
 ## 7. Principais descobertas da análise exploratória
 
@@ -197,11 +230,30 @@ streamlit run app.py
 | **Validação cruzada** | **5 janelas de 6 semanas**, sempre treinando no passado; é ela que escolhe o algoritmo |
 | **Algoritmos** | Média da loja (referência), planilha (loja × dia × promoção), Regressão Linear, Lasso, Random Forest, XGBoost, LightGBM e HistGradientBoosting, com o **log da venda** como alvo e métricas em euros |
 | **Escolha** | **XGBoost**: menor MAPE na validação cruzada (**10,6% ± 1,3%**) e 1º lugar em todas as métricas, empatado com o LightGBM e o HGB dentro do desvio |
-| **Ajuste fino** | `RandomizedSearchCV` com a validação cruzada no tempo: erro do total na validação de **4,4%** para **3,9%** |
+| **Ajuste fino** | Grid, Random e Bayesiana (Optuna) nas mesmas janelas no tempo; o Random Search ficou: erro do total na validação de **4,4%** para **3,9%** |
 | **Anti-vazamento** | Com os clientes do dia, o MAPE "cairia" de 9,5% para **5,3%**; o "modelo da média" da v1 acertava o total com **0,0%** de erro porque usava as respostas |
 
 <div align="center">
 <img src="Imagens/Comparacao dos modelos.png" width="850px">
+</div>
+
+### Ajuste fino: Grid Search x Random Search x Bayesiana
+
+Os 3 métodos ajustaram o XGBoost nas **mesmas 3 janelas de 6 semanas** do treino, pelo MAPE. A regra foi definida antes da busca: o Random Search só seria trocado se outro método ganhasse por mais que o desvio entre as janelas.
+
+| Método | MAPE na validação cruzada (± desvio) | MAPE na validação | Erro do total na validação | Custo |
+|---|---|---|---|---|
+| Sem ajuste (padrão do item 5) | 10,47% ± 1,22% | 9,65% | 4,36% | 3 modelos, 5,0 min |
+| **Grid Search** (profundidade x taxa de aprendizado) | 10,02% ± 1,12% | 9,47% | 4,23% | 12 modelos, 28,0 min |
+| **Random Search** (6 hiperparâmetros, 8 sorteios) | **9,88% ± 0,97%** | 9,50% | **3,94%** | 24 modelos, 56,4 min |
+| **Bayesiana com Optuna** (8 tentativas, com poda) | 9,95% ± 1,16% | 9,44% | 4,20% | 18 modelos, 48,5 min |
+
+- O **Random Search** teve o menor MAPE e foi mantido: o modelo e as métricas de teste **não mudaram**. As diferenças entre os métodos (0,07 a 0,14 ponto) são bem menores que o desvio entre as janelas (~1 ponto).
+- A Optuna **podou 3 das 8 tentativas** no meio da validação cruzada (18 modelos em vez de 24).
+- Cada XGBoost leva cerca de **140 s** para treinar nesta máquina: a grade completa do espaço do Random Search (216 combinações x 3 janelas) levaria **~25 horas**. Com um treino caro, o que manda é o número de tentativas que cabe no tempo disponível.
+
+<div align="center">
+<img src="Imagens/Comparacao dos metodos de busca.png" width="850px">
 </div>
 
 ## 9. Resultado do modelo
@@ -217,6 +269,7 @@ streamlit run app.py
 - O erro do total vai de **3,4%** (lojas tipo d) a **4,7%** (tipo b). O **sábado** é o dia mais difícil (MAPE de **12,6%**).
 - Os erros grandes vêm de **eventos**: a loja 909, a pior, ficou fechada cerca de duas semanas em julho e voltou vendendo bem acima do normal.
 - 🎯 **A faixa de erro cumpriu o prometido:** medida em **5 períodos** de 6 semanas antes do teste, ela diz que o total real fica entre **95,4% e 108,4%** do previsto em 80% das lojas. No teste, cobriu **78,9%** das lojas. Se tivesse sido medida só no último período (em que o modelo errava para baixo), cobriria apenas **60,4%**.
+- 📊 **Cenários por loja:** cada loja recebe um **pior cenário** (total previsto × 95,4%), um **provável** (o total previsto) e um **melhor** (× 108,4%). Na rede inteira, o teste ficou dentro: pior **€ 278,0 milhões**, provável **€ 291,5 milhões**, melhor **€ 316,1 milhões** e real **€ 289,6 milhões**. Loja a loja, o real caiu entre os cenários em **78,9%**, abaixo do pior em **18,5%** e acima do melhor em **2,6%** (o modelo superestimou um pouco no teste). **Como ler:** o pior cenário é a base de um orçamento conservador, o provável é o planejamento normal e o melhor é o teto; lojas com reforma ou reinauguração pedem revisão manual. A tabela está em `reports/cenarios_lojas_teste.csv` (teste) e `reports/cenarios_6_semanas.csv` (ago–set/2015).
 
 <div align="center">
 <img src="Imagens/Previsto x observado.png" width="850px">
@@ -224,18 +277,35 @@ streamlit run app.py
 
 **O que mais pesa na previsão** (importância por permutação): a **loja** (pelas suas médias), a **promoção**, o **dia da semana** e o **dia do mês**. Num dia típico, a promoção soma **+20%**, a segunda-feira **+12%** e a semana antes do Natal **+50%**.
 
+**Por que cada previsão (SHAP):** o SHAP parte da venda típica da rede (**€ 6.355** por dia) e multiplica pelo efeito de cada grupo de variáveis. O **tamanho da loja** (as 3 médias) domina, com efeito médio de **31,7%**, seguido do **calendário** (**5,1%**) e da **promoção** (**4,9%**). A conta fecha: valor base + contribuições = previsão em todos os **41.396** dias do teste. O SHAP divide o crédito entre variáveis ligadas: parte do efeito da promoção fica na "média da loja com promoção", por isso a promoção sozinha aparece com ~5%, enquanto o mesmo dia com promoção vende +20%. O app mostra esse gráfico para cada loja.
+
+<div align="center">
+<img src="Imagens/SHAP importancia e efeitos.png" width="850px">
+</div>
+
+**Monitoramento (quando retreinar):**
+- **Backtest nas 5 janelas da validação cruzada:** retreinar a cada 6 semanas mantém o MAPE médio em **10,25%** e o erro do total em **4,43%**. Sem retreino, o erro cresce para **10,86%** e **5,38%** (na última janela, o erro do total chega a **6,21%**, contra 3,94%). Treinar só com os últimos 12 meses não ajudou (MAPE de **10,53%**). **Retreinar a cada 6 semanas, com todo o histórico.**
+- **SLA semanal**, tirado das 30 semanas da validação cruzada (percentil 90): MAPE da semana até **12,9%** e erro do total da rede até **±8,1%**. As **6 semanas do teste ficaram dentro**; a pior foi de 03 a 09/07 (MAPE de **12,6%**).
+- **Data drift** (não precisa da venda real): só o **feriado escolar** mudou (PSI de **0,22**, "atenção"), por causa das férias de verão em julho. As previsões ficaram estáveis (PSI de **0,006**).
+
+<div align="center">
+<img src="Imagens/Backtest walk-forward.png" width="850px">
+</div>
+
 ## 10. App interativo (Streamlit)
 
-O app tem 3 abas:
-1. **🏪 Loja:** escolha uma loja e veja o **total previsto** de 01/08 a 17/09/2015, o **mínimo e o máximo prováveis**, o cadastro da loja e a venda prevista de cada dia.
-2. **🧾 Orçamento de reforma:** escolha a **parcela do faturamento** destinada à reforma e veja a verba de cada loja e da rede (ex.: com 5%, cerca de **€ 12 milhões** para 856 lojas), com a opção conservadora pelo mínimo provável. A tabela pode ser baixada em CSV.
-3. **ℹ️ Sobre o modelo:** erro do total e do dia no teste, comparação com a média da loja e os avisos da ficha do modelo.
+O app tem 5 abas:
+1. **🏪 Loja:** escolha uma loja e veja o **total previsto** de 01/08 a 17/09/2015, o **pior e o melhor cenário**, o cadastro da loja, a venda prevista de cada dia e **o que pesa na previsão daquela loja** (SHAP por grupo de variáveis).
+2. **📊 Cenários:** o **pior, o provável e o melhor cenário** de cada loja e da rede, com a explicação de cada um e a tabela em CSV. Logo abaixo, a **conferência no teste**: em quantas lojas o total real caiu entre os cenários, abaixo do pior e acima do melhor, com o MAE e o MAPE do dia de cada loja.
+3. **🧾 Orçamento de reforma:** escolha a **parcela do faturamento** destinada à reforma e veja a verba de cada loja e da rede (ex.: com 5%, cerca de **€ 12 milhões** para 856 lojas), com a opção conservadora pelo pior cenário. A tabela pode ser baixada em CSV.
+4. **📡 Monitoramento:** a simulação de produção do notebook: as 6 semanas do teste acompanhadas **semana a semana** contra o **SLA da ficha do modelo**, para a rede ou para uma loja, e o **data drift** (PSI e K-S) das entradas e da previsão. As contas vêm de `src/monitoramento.py`, as mesmas do notebook.
+5. **ℹ️ Sobre o modelo:** erro do total e do dia no teste, comparação com a média da loja, o método de busca dos hiperparâmetros e os avisos da ficha do modelo.
 
 ```bash
 streamlit run app.py
 ```
 
-> ℹ️ O app usa `reports/previsoes_6_semanas.csv` e `Model/modelo_rossmann_v2.json`, gerados ao executar o notebook até a Fase 05.
+> ℹ️ O app usa `Model/modelo_rossmann_v2.json` e os arquivos de `reports/` (previsões, SHAP por loja e monitoramento), gerados ao executar o notebook até a Fase 05.
 
 > 📱 A versão original entregava a previsão por um **bot no Telegram**, com uma API no Heroku. O plano gratuito do Heroku acabou em 2022 e o bot parou; as pastas `rossmann/` e `rossmann-telegram-api/` ficam como histórico.
 
@@ -251,13 +321,13 @@ A versão original foi mantida em `Notebooks/` (e o bot em `rossmann-telegram-ap
 | 4 | "Modelo da média" calculado nas semanas do teste | Usava as respostas (erro do total de 0,0%) | Média da loja e planilha treinadas só no passado |
 | 5 | Escalas ajustadas na base toda; o arquivo errado salvo para o mês e o ano | Vazamento e produção transformando os dados errado | Tudo dentro de um `Pipeline`, ajustado só no treino |
 | 6 | Distância nula → média; datas nulas → 0 | Inventava concorrentes e um "ano 0" | Nulos tratados pelo significado, com indicadores |
-| 7 | XGBoost com `colsample_bytee` (ignorado) e modelo final com hiperparâmetros não testados | Ajuste não reproduzível | `RandomizedSearchCV` com validação cruzada no tempo e sementes fixas |
+| 7 | XGBoost com `colsample_bytee` (ignorado) e modelo final com hiperparâmetros não testados | Ajuste não reproduzível | Grid, Random e Bayesiana (Optuna) comparados na validação cruzada no tempo, com sementes fixas |
 | 8 | README diz que o Random Forest venceu; a produção usa o XGBoost | Documentação contraditória | Escolha registrada pela validação cruzada (DA-08) |
 | 9 | Cenários = total ± erro de **um dia** | Faixa de ±0,3%, que cobre 5% das lojas; "loja 286 com erro de 4%" e MAPE de 44% | Faixa relativa do total de 6 semanas, medida em 5 períodos: cobriu **78,9%** das lojas no teste (meta: 80%) |
 | 10 | Sem erro do total por loja | Não respondia à pergunta do CFO | **Erro do total de 6 semanas** como métrica do negócio: **3,7%** |
 | 11 | Prophet com todas as lojas numa série só | Misturava 1.115 lojas diferentes | Prophet retirado, com o motivo registrado |
 | 12 | Vendas em R$ | A base é alemã | **Euros** |
-| 13 | Bot no Telegram (Heroku) | Parou com o fim do plano gratuito | App Streamlit com **14 testes** no GitHub Actions |
+| 13 | Bot no Telegram (Heroku) | Parou com o fim do plano gratuito | App Streamlit com **22 testes** no GitHub Actions, aba de cenários e aba de monitoramento |
 | 14 | Resultado no teste: MAE de € 933, MAPE de 13,3% | — | MAE de **€ 614**, MAPE de **9,2%** nas mesmas semanas |
 
 ## 12. Insights
@@ -271,21 +341,24 @@ A versão original foi mantida em `Notebooks/` (e o bot em `rossmann-telegram-ap
 7. **A régua de comparação também precisa ser testada:** a "média da loja" da v1 acertava o total com 0,0% de erro porque usava as respostas.
 8. **A incerteza depende do período em que foi medida:** medida num período só, a faixa de 80% cobriria 60% no teste; medida em 5 períodos, cobriu 79%.
 9. **Os erros grandes vêm de eventos** (reformas, reinaugurações): vale revisar essas lojas à mão.
+10. **Retreinar a cada 6 semanas vale a pena:** sem retreino, o erro do total sobe de 4,4% para 5,4% em média nas 5 janelas. Usar só o último ano não ajuda.
+11. **Ajustar hiperparâmetros rendeu pouco:** Grid, Random e Bayesiana empatam dentro do desvio entre as janelas. O que mais pesa é o tamanho da loja (31,7% de efeito médio no SHAP).
 
 ## 13. Limites
 
-- **A faixa ainda é um pouco otimista para baixo:** **18,5%** das lojas venderam menos que o mínimo provável (o esperado era 10%), e nas lojas menores a cobertura cai para **71,3%**. A faixa é a mesma para todas as lojas.
+- **A faixa ainda é um pouco otimista para baixo:** **18,5%** das lojas venderam menos que o pior cenário (o esperado era 10%), e nas lojas menores a cobertura cai para **71,3%**. A faixa é a mesma para todas as lojas.
 - **Dados de 2013 a 2015:** para usar hoje, é preciso retreinar com dados recentes.
 - **Prevê só dias abertos:** o calendário de abertura precisa ser informado.
 - **Eventos fora do padrão não são previstos:** reinaugurações, reformas e um concorrente abrindo durante as 6 semanas.
 - **Lojas novas** recebem a média da rede.
-- **Correlação não é causa:** a Promo2 está ligada a vendas menores, mas a base não diz se ela atrapalha ou se foi dada às lojas mais fracas.
+- **Correlação não é causa:** a Promo2 está ligada a vendas menores, mas a base não diz se ela atrapalha ou se foi dada às lojas mais fracas. O mesmo vale para o SHAP: ele explica o modelo, não a loja.
+- **O SLA e o drift foram testados em só 6 semanas:** a simulação mostra o processo, mas um alerta real exige acompanhar semanas novas.
 
 ## 14. Próximos passos
 
 1. **Faixa por tamanho de loja** (ou intervalos conformes condicionais), porque as lojas menores ficaram com cobertura de 71,3%.
 2. **Variável de tendência por loja** (crescimento recente), para reduzir a troca de viés entre períodos.
 3. **Marcar eventos** (períodos longos de loja fechada) e avisar no app as lojas com reforma recente.
-4. **Busca de hiperparâmetros maior** e comparação com o LightGBM ajustado, 3× mais rápido.
+4. **SHAP numa amostra de dias** (o SHAP exato leva ~2h20 das ~6h de execução) e comparação com o **LightGBM ajustado**, 3× mais rápido.
 5. **Dados externos:** clima e feriados escolares por estado.
 6. **Publicar o app** no Streamlit Community Cloud e gravar um GIF para o README.

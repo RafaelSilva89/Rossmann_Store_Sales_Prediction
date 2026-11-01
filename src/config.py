@@ -42,3 +42,5 @@ MEDIAS_LOJA = ['media_loja', 'media_loja_dia_semana', 'media_loja_promo']
 FEATURES = ['loja'] + CATEGORICAS + NUMERICAS
 # Vazamento: o número de clientes do dia só é conhecido depois que o dia acaba
 PROIBIDAS = ['clientes']
+# Monitoramento: entradas acompanhadas pelo PSI e pelo K-S (calendário e contadores de tempo mudam por construção)
+VARIAVEIS_DRIFT = ['promo', 'feriado_escolar', 'distancia_concorrente']

@@ -127,6 +127,34 @@ def cobertura_faixa(y, previsto, faixa):
     return float(((y >= previsto * faixa[0]) & (y <= previsto * faixa[1])).mean())
 
 
+def cenarios_por_loja(lojas, previsto, faixa, real=None):
+    """Cenários do total do período de cada loja: pior (previsto x limite inferior da faixa), provável (o previsto)
+    e melhor (previsto x limite superior).
+
+    Com a venda real (período já conhecido, como o teste), acrescenta o erro do total, o erro médio do dia (MAE e MAPE)
+    e em qual cenário o total real caiu.
+    """
+    dados = pd.DataFrame({'loja': np.asarray(lojas), 'previsto': np.asarray(previsto, dtype=float)})
+    if real is not None:
+        dados['real'] = np.asarray(real, dtype=float)
+    tabela = dados.groupby('loja')[['previsto']].sum().rename(columns={'previsto': 'cenário provável'})
+    tabela.insert(0, 'pior cenário', tabela['cenário provável'] * faixa[0])
+    tabela['melhor cenário'] = tabela['cenário provável'] * faixa[1]
+    if real is None:
+        return tabela
+    dados['erro_abs'] = (dados['previsto'] - dados['real']).abs()
+    dados['ape'] = dados['erro_abs'] / dados['real']
+    por_loja = dados.groupby('loja')
+    tabela['total real'] = por_loja['real'].sum()
+    tabela['erro do total'] = tabela['cenário provável'] / tabela['total real'] - 1
+    tabela['MAE do dia'] = por_loja['erro_abs'].mean()
+    tabela['MAPE do dia'] = por_loja['ape'].mean()
+    tabela['real caiu'] = np.select([tabela['total real'] < tabela['pior cenário'],
+                                     tabela['total real'] > tabela['melhor cenário']],
+                                    ['abaixo do pior', 'acima do melhor'], 'entre os cenários')
+    return tabela
+
+
 def erro_por_grupo(y, previsto, grupos):
     """Tradução do erro para o negócio: erro médio por grupo (ex.: tipo de loja) e cenários de melhor e pior caso."""
     tabela = pd.DataFrame({'real': np.asarray(y, dtype=float), 'previsto': np.asarray(previsto, dtype=float),

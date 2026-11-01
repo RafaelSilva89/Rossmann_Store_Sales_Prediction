@@ -24,6 +24,9 @@ Os números vêm das saídas do notebook [`Notebooks/Rossmann_Store_Sales_Predic
 | [DA-14](#da-14--faixa-relativa-do-total-medida-nas-5-janelas) | Faixa relativa do total, medida nas 5 janelas |
 | [DA-15](#da-15--modelo-de-produção-retreinado-com-todos-os-dias) | Modelo de produção retreinado com todos os dias |
 | [DA-16](#da-16--app-streamlit-no-lugar-do-bot-do-telegram) | App Streamlit no lugar do bot do Telegram |
+| [DA-17](#da-17--grid-x-random-x-bayesiana-random-search-mantido) | Grid x Random x Bayesiana: Random Search mantido |
+| [DA-18](#da-18--shap-calculado-pelo-próprio-xgboost-por-grupo-de-variáveis) | SHAP calculado pelo próprio XGBoost, por grupo de variáveis |
+| [DA-19](#da-19--quando-retreinar-backtest-sla-semanal-e-drift) | Quando retreinar: backtest, SLA semanal e drift |
 
 ---
 
@@ -129,7 +132,7 @@ Os números vêm das saídas do notebook [`Notebooks/Rossmann_Store_Sales_Predic
 - **Decisão:** `RandomizedSearchCV` com 8 combinações, avaliadas em 3 janelas de 6 semanas dentro do treino (sem tocar na validação), escolhendo pelo MAPE. O ajustado é conferido na validação e o final (`clone`) treina em treino + validação.
 - **Alternativas consideradas:** busca maior (horas de execução na máquina disponível); LightGBM, empatado na validação cruzada e 3× mais rápido.
 - **Consequência:** 500 árvores, profundidade 10, taxa 0,05 e 70% das colunas. Na validação, o erro do total cai de 4,4% para 3,9%; no teste, fica em 3,7% (MAPE de 9,2%).
-- **Onde está:** item 7 da Fase 03; `hiperparametros` na ficha do modelo.
+- **Onde está:** item 7.2 da Fase 03; `hiperparametros` na ficha do modelo. A comparação com Grid e Bayesiana está na DA-17.
 
 ## DA-14 — Faixa relativa do total, medida nas 5 janelas
 
@@ -137,7 +140,8 @@ Os números vêm das saídas do notebook [`Notebooks/Rossmann_Store_Sales_Predic
 - **Decisão:** faixa **relativa** do total de 6 semanas, entre os percentis 10 e 90 da razão real ÷ previsto nas **5 janelas** da validação cruzada (5.396 totais de loja; em cada janela, o modelo ajustado treina no passado e prevê as 6 semanas seguintes): de **95,4% a 108,4%** do previsto. A cobertura é medida no teste, e a faixa **não é recalculada** com o teste.
 - **Alternativas consideradas:** faixa em euros (não acompanha o tamanho da loja); faixa só na validação (97,7% a 108,1%, que herda o viés de um único período); recalcular a faixa no teste (usaria o gabarito); intervalos conformes por tamanho de loja (ficou como próximo passo).
 - **Consequência:** no teste, a faixa cobriu **78,9%** das lojas (meta: 80%); a faixa de uma janela só teria coberto **60,4%**. Ainda há mais lojas abaixo (18,5%) que acima (2,6%), porque o modelo superestimou no teste (MPE de +2,3%), e as lojas menores têm cobertura de 71,3%. Custa 4 treinos a mais do modelo ajustado (cerca de 7 minutos).
-- **Onde está:** `faixa_relativa` e `cobertura_faixa` em `src/avaliacao.py`; itens 8.2 e 8.3 da Fase 03; `cobertura_faixa_teste` na ficha.
+- **Uso para o negócio:** a faixa vira os 3 cenários de cada loja: **pior** (previsto × limite inferior), **provável** (o previsto) e **melhor** (previsto × limite superior). A tabela por loja no teste mostra também o total real, o MAE e o MAPE do dia, no formato da tabela de cenários da v1, mas com a faixa do total.
+- **Onde está:** `faixa_relativa`, `cobertura_faixa` e `cenarios_por_loja` em `src/avaliacao.py`; itens 8.2 e 8.3 e "Cenários por loja" da Fase 03; `reports/cenarios_lojas_teste.csv` e `reports/cenarios_6_semanas.csv`; aba **📊 Cenários** do app; `cobertura_faixa_teste` na ficha.
 
 ## DA-15 — Modelo de produção retreinado com todos os dias
 
@@ -150,7 +154,31 @@ Os números vêm das saídas do notebook [`Notebooks/Rossmann_Store_Sales_Predic
 ## DA-16 — App Streamlit no lugar do bot do Telegram
 
 - **Contexto:** a v1 entregava a previsão por um bot no Telegram com uma API no Heroku, cujo plano gratuito acabou em 2022. O Prophet da v1 foi treinado com todas as lojas misturadas numa série só.
-- **Decisão:** um app Streamlit que lê as previsões já calculadas, com 3 abas (loja, orçamento de reforma e sobre o modelo). O Prophet sai da comparação. As pastas `rossmann/` e `rossmann-telegram-api/` ficam como histórico.
+- **Decisão:** um app Streamlit que lê as previsões já calculadas, com 3 abas (loja, orçamento de reforma e sobre o modelo); depois ganhou a aba de monitoramento (DA-19) e a aba de cenários (DA-14). O Prophet sai da comparação. As pastas `rossmann/` e `rossmann-telegram-api/` ficam como histórico.
 - **Alternativas consideradas:** reativar a API em outro serviço (manutenção de servidor para um projeto de portfólio); um Prophet por loja (1.115 modelos, sem as variáveis do cadastro).
-- **Consequência:** o CFO vê o total de cada loja com a faixa, simula a parcela do faturamento para reforma e baixa a tabela em CSV. O app tem 3 testes automatizados (`AppTest`).
+- **Consequência:** o CFO vê o total de cada loja com a faixa, simula a parcela do faturamento para reforma e baixa a tabela em CSV. O app tem 5 testes automatizados (`AppTest`).
 - **Onde está:** `app.py` (igual à última célula do notebook); `tests/test_app.py`.
+
+## DA-17 — Grid x Random x Bayesiana: Random Search mantido
+
+- **Contexto:** a DA-13 escolheu os hiperparâmetros com Random Search. Era preciso saber se outro método de busca encontraria um modelo melhor, com um treino caro (cerca de 140 s por XGBoost).
+- **Decisão:** comparar Grid Search (profundidade x taxa de aprendizado, 4 combinações), Random Search (6 hiperparâmetros, 8 sorteios) e Bayesiana com Optuna (8 tentativas, amostrador TPE e poda pela mediana) nas **mesmas 3 janelas de 6 semanas** do treino, pelo MAPE. Regra definida antes da busca: o Random Search só é trocado se outro método ganhar por mais que o desvio entre as janelas.
+- **Alternativas consideradas:** a grade completa do espaço do Random Search (216 combinações x 3 janelas, ~25 horas); mais tentativas na Optuna (mais horas de execução, para diferenças menores que o desvio).
+- **Consequência:** Random Search 9,88% ± 0,97%, Optuna 9,95% ± 1,16% e Grid 10,02% ± 1,12% (padrão: 10,47%). O Random Search ficou, e o modelo e as métricas de teste não mudaram. A Optuna podou 3 das 8 tentativas (18 modelos em vez de 24). A busca toda custa cerca de 2h20.
+- **Onde está:** itens 7.1 a 7.5 da Fase 03; `objetivo_cv_com_poda` e `historico_optuna` em `src/otimizacao.py`; `metodo_de_busca` na ficha do modelo.
+
+## DA-18 — SHAP calculado pelo próprio XGBoost, por grupo de variáveis
+
+- **Contexto:** a importância por permutação diz o que pesa no modelo como um todo, mas não explica a previsão de uma loja. O CFO precisa saber por que uma loja recebeu aquele valor.
+- **Decisão:** valores SHAP exatos do XGBoost (`pred_contribs`), na escala do log da venda: cada contribuição multiplica a venda, e exp(contribuição) − 1 é o efeito em %. As colunas do one-hot e as 3 médias da loja são somadas em 8 grupos de negócio. A eficiência é conferida: valor base + contribuições = log da previsão.
+- **Alternativas consideradas:** a biblioteca `shap` (mais uma dependência, para o mesmo cálculo das árvores); SHAP numa amostra de dias (mais rápido, ficou como próximo passo).
+- **Consequência:** diferença máxima de 2,5e-05 na conferência. O tamanho da loja domina (31,7% de efeito médio), depois calendário (5,1%) e promoção (4,9%); a ordem bate com a permutação (correlação de postos de 0,74). O SHAP divide o crédito entre variáveis ligadas: parte do efeito da promoção fica na média da loja com promoção. O efeito por loja vai para a aba Loja do app. O cálculo exato em todos os dias leva cerca de 2h20.
+- **Onde está:** item 3 da Fase 04 e item 2 da Fase 05; `src/explicacao.py`; `reports/shap_lojas.csv`.
+
+## DA-19 — Quando retreinar: backtest, SLA semanal e drift
+
+- **Contexto:** o modelo prevê 6 semanas por vez. Era preciso decidir de quanto em quanto tempo retreiná-lo e como saber, em produção, que ele deixou de funcionar.
+- **Decisão:** backtest nas 5 janelas da validação cruzada com 3 estratégias (retreino a cada 6 semanas com todo o histórico, retreino com os últimos 12 meses e modelo sem retreino). SLA semanal pelo percentil 90 das 30 semanas da validação cruzada, para o MAPE da semana e o erro do total da rede. Drift por PSI e K-S, comparando as entradas e a previsão do período novo com as das 5 janelas, sem precisar da venda real. Variáveis de calendário ficam fora do drift, porque mudam por construção.
+- **Alternativas consideradas:** SLA pelo erro do teste (usaria o gabarito para definir a régua); retreino só quando o SLA estourar (o erro sobe aos poucos, antes de estourar).
+- **Consequência:** retreinar a cada 6 semanas dá MAPE médio de 10,25% e erro do total de 4,43%, contra 10,86% e 5,38% sem retreino; os últimos 12 meses não ajudam (10,53%). SLA: MAPE da semana até 12,9% e erro do total da rede até ±8,1%; as 6 semanas do teste ficaram dentro. Só o feriado escolar mudou (PSI de 0,22, férias de julho); a previsão ficou estável (PSI de 0,006).
+- **Onde está:** "3 - Monitoramento em produção" da Fase 05; `src/monitoramento.py`; bloco `monitoramento` da ficha; aba "📡 Monitoramento" do app.

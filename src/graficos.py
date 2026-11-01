@@ -16,12 +16,16 @@ def salvar(nome_arquivo):
 
 
 def titulo(texto, subtitulo=None):
-    """Título e subtítulo alinhados à esquerda, acima da área do gráfico (espaçamento em polegadas)."""
+    """Título e subtítulo alinhados à esquerda, acima da área do gráfico (espaçamento em polegadas).
+
+    Se algum gráfico da figura tem título próprio, o conjunto sobe 0,3 polegada para não ficar em cima dele.
+    """
     altura = plt.gcf().get_figheight()
     topo = plt.gcf().subplotpars.top
-    plt.figtext(0.01, topo + 0.45 / altura, texto, ha='left', va='bottom', fontsize=16)
+    folga = 0.3 if any(ax.get_title() for ax in plt.gcf().axes) else 0
+    plt.figtext(0.01, topo + (0.45 + folga) / altura, texto, ha='left', va='bottom', fontsize=16)
     if subtitulo:
-        plt.figtext(0.01, topo + 0.15 / altura, subtitulo, ha='left', va='bottom', fontsize=11, color='#656565',
+        plt.figtext(0.01, topo + (0.15 + folga) / altura, subtitulo, ha='left', va='bottom', fontsize=11, color='#656565',
                     style='italic')
 
 

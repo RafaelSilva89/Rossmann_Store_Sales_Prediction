@@ -1,5 +1,5 @@
 {
-  "data_treino": "2026-10-25 00:53",
+  "data_treino": "2026-11-01 07:06",
   "modelo": "XGBoost ajustado (Pipeline: médias da loja + one-hot + XGBoost, alvo em log)",
   "arquivo": "modelo_rossmann_v2.pkl",
   "treinado_com": "844.338 dias com venda de 1.115 lojas (01/01/2013 a 31/07/2015)",
@@ -46,11 +46,23 @@
     "learning_rate": 0.05,
     "colsample_bytree": 0.7
   },
+  "metodo_de_busca": "Random Search",
   "avisos": [
     "Prevê só dias com a loja ABERTA: dias fechados (domingos, feriados, reformas) devem ser zerados antes da soma.",
     "A faixa de 80% vale para o TOTAL de 6 semanas da loja, não para a venda de um dia.",
     "Não use o número de clientes do dia como entrada: só é conhecido depois do dia (vazamento).",
     "As médias de cada loja vêm do histórico até 31/07/2015: uma loja nova (sem histórico) recebe a média da rede.",
     "Vendas em euros, de 2013 a 2015: valores atuais exigem retreinar com dados recentes."
-  ]
+  ],
+  "monitoramento": {
+    "sla_mape_semanal": 0.1285,
+    "sla_erro_total_rede_semanal": 0.081,
+    "psi_alerta": 0.25,
+    "variaveis_drift": [
+      "promo",
+      "feriado_escolar",
+      "distancia_concorrente",
+      "previsto"
+    ]
+  }
 }
