@@ -328,7 +328,10 @@ A versão original foi mantida em `Notebooks/` (e o bot em `rossmann-telegram-ap
 | 11 | Prophet com todas as lojas numa série só | Misturava 1.115 lojas diferentes | Prophet retirado, com o motivo registrado |
 | 12 | Vendas em R$ | A base é alemã | **Euros** |
 | 13 | Bot no Telegram (Heroku) | Parou com o fim do plano gratuito | App Streamlit com **22 testes** no GitHub Actions, aba de cenários e aba de monitoramento |
-| 14 | Resultado no teste: MAE de € 933, MAPE de 13,3% | — | MAE de **€ 614**, MAPE de **9,2%** nas mesmas semanas |
+| 14 | Sem explicação de cada previsão | Não dizia o que pesa na venda de cada loja | **SHAP** por grupo de variáveis, no notebook e por loja no app |
+| 15 | Resultado no teste: MAE de € 933, MAPE de 13,3%, RMSE de € 1.355 | — | MAE de **€ 614**, MAPE de **9,2%**, RMSE de **€ 904** nas mesmas semanas |
+
+- 🏆 **Veredito:** v2. Nas mesmas 6 semanas de teste, o erro do dia cai **34%** (MAE de € 933 para **€ 614**; RMSE de € 1.355 para **€ 904**), o erro do total de 6 semanas por loja passa a ser medido (**3,7%**, **39% menor** que o da média da loja) e a EDA foi corrigida (6 conclusões se invertem).
 
 ## 12. Insights
 
